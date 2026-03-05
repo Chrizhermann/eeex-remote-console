@@ -1,0 +1,18 @@
+BACKUP ~weidu_external/backup/eeexremote~
+AUTHOR ~Chrizhermann (github.com/Chrizhermann/eeex-remote-console)~
+VERSION ~v0.1.0~
+
+BEGIN ~EEex Remote Console~
+DESIGNATED 0
+LABEL ~EEexRemote-Main~
+
+// ---- Prerequisites ----
+REQUIRE_PREDICATE (GAME_IS ~bgee bg2ee eet~)
+  ~EEex Remote Console requires BG:EE, BG2:EE, or EET.~
+
+REQUIRE_PREDICATE (MOD_IS_INSTALLED ~EEex/EEex.tp2~ ~0~)
+  ~EEex Remote Console requires EEex. Install EEex first: https://github.com/Bubb13/EEex~
+
+// ---- Copy mod files to override ----
+COPY ~eeexremote/M_EEexRC.lua~  ~override~
+COPY ~eeexremote/EEexRC.menu~   ~override~
