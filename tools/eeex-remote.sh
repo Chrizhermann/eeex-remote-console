@@ -6,9 +6,9 @@
 #   timeout: seconds to wait for result (default: 10)
 #
 # Examples:
-#   eeex-remote.sh /c/Games/BG2EE/override 'print("hello")'
-#   eeex-remote.sh /c/Games/BG2EE/override @tools/diagnostic.lua
-#   eeex-remote.sh /c/Games/BG2EE/override 'return 2+2' 5
+#   eeex-remote.sh <game-dir>/override 'print("hello")'
+#   eeex-remote.sh <game-dir>/override @scripts/diagnostic.lua
+#   eeex-remote.sh <game-dir>/override 'return 2+2' 5
 
 set -euo pipefail
 

@@ -1,0 +1,42 @@
+# EEex Remote Console — Claude Code Context
+
+Copy this to `CLAUDE.md` and customize for your setup.
+
+## Project Overview
+
+File-based IPC bridge for executing Lua inside a running BG:EE/BG2:EE game with EEex. Two files in the game's override directory serve as the communication channel: a command file (Lua source) and a result file (JSON).
+
+## Key Files
+
+- `eeexremote/M_EEexRC.lua` — in-game module (polls for commands, executes, writes JSON results)
+- `eeexremote/EEexRC.menu` — invisible 1x1 menu element that fires `EEexRemote.Poll()` every render frame
+- `tools/eeex-remote.sh` — bash CLI for sending commands
+- `setup-eeexremote.tp2` — WeiDU installer
+
+## Game Directory
+
+Set this to your game's install path:
+
+```
+GAME_DIR=/path/to/Baldurs Gate II Enhanced Edition
+OVERRIDE=$GAME_DIR/override
+```
+
+## Quick Test
+
+```bash
+tools/eeex-remote.sh "$OVERRIDE" 'print("hello")'
+```
+
+## Key References
+
+- EEex source: https://github.com/Bubb13/EEex
+- WeiDU documentation: https://weidu.org/
+- IESDP (file format docs): https://gibberlings3.github.io/iesdp/
+
+## EEex Gotchas
+
+- `EEex_Menu_LoadFile("Name")` for .menu files, NOT `Infinity_DoFile`
+- Each Lua `:gsub()` call must be on a separate statement (chaining passes count as arg)
+- No `Infinity_DisplayString()` at M_ load time — engine display not ready
+- `print()` output goes to EEex console, use `Infinity_DisplayString()` for in-game display
