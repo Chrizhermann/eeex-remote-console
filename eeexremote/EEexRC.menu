@@ -1,0 +1,11 @@
+menu
+{
+	name 'EEEX_REMOTE'
+	align center center
+
+	text
+	{
+		area 0 0 1 1
+		text lua "EEexRemote.Poll()"
+	}
+}
