@@ -94,4 +94,5 @@ end
 -- Register the polling element after menus load
 EEex_Menu_AddAfterMainFileLoadedListener(function()
     Infinity_DoFile("EEexRC")
+    EEex_Menu_InjectTemplate("WORLD_ACTIONBAR", "EEEX_REMOTE", 0, 0, 1, 1)
 end)

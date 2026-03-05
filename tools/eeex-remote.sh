@@ -34,9 +34,10 @@ else
     printf '%s' "$CMD" > "$CMD_FILE"
 fi
 
-# Poll for result (0.2s intervals)
+# Poll for result (0.2s intervals, TIMEOUT is in seconds)
+max_iterations=$((TIMEOUT * 5))
 elapsed=0
-while [ ! -f "$RESULT_FILE" ] && [ "$elapsed" -lt "$TIMEOUT" ]; do
+while [ ! -f "$RESULT_FILE" ] && [ "$elapsed" -lt "$max_iterations" ]; do
     sleep 0.2
     elapsed=$((elapsed + 1))
 done
