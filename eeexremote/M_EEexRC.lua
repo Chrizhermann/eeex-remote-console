@@ -23,7 +23,10 @@ end
 -- Write JSON result file
 local function _writeResult(result)
     local out = io.open(RESULT_FILE, "w")
-    if not out then return end
+    if not out then
+        _realPrint("EEexRemote: failed to write result file")
+        return
+    end
 
     out:write('{"status":' .. _jsonStr(result.status))
     if result.error then
@@ -84,11 +87,7 @@ end
 
 -- Poll function — called every frame from .menu element
 function EEexRemote.Poll()
-    local f = io.open(CMD_FILE, "r")
-    if f then
-        f:close()
-        _Execute()
-    end
+    _Execute()
     return ""  -- empty string for text lua binding
 end
 
