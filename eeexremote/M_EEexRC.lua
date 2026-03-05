@@ -93,6 +93,19 @@ end
 
 -- Register the polling element after menus load
 EEex_Menu_AddAfterMainFileLoadedListener(function()
-    Infinity_DoFile("EEexRC")
-    EEex_Menu_InjectTemplate("WORLD_ACTIONBAR", "EEEX_REMOTE", 0, 0, 1, 1)
+    EEex_Menu_LoadFile("EEexRC")
+
+    -- Hook WORLD_ACTIONBAR open to push our invisible polling menu alongside it
+    local actionbarMenu = EEex_Menu_Find("WORLD_ACTIONBAR")
+    local oldOnOpen = EEex_Menu_GetItemFunction(actionbarMenu.reference_onOpen)
+    EEex_Menu_SetItemFunction(actionbarMenu.reference_onOpen, function()
+        local result = oldOnOpen()
+        Infinity_PushMenu("EEEX_REMOTE")
+        return result
+    end)
+    local oldOnClose = EEex_Menu_GetItemFunction(actionbarMenu.reference_onClose)
+    EEex_Menu_SetItemFunction(actionbarMenu.reference_onClose, function()
+        Infinity_PopMenu("EEEX_REMOTE")
+        return oldOnClose()
+    end)
 end)
