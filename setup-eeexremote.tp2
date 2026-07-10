@@ -1,17 +1,40 @@
 BACKUP ~weidu_external/backup/eeexremote~
 AUTHOR ~Chrizhermann (github.com/Chrizhermann/eeex-remote-console)~
-VERSION ~v0.1.0~
+VERSION ~v0.2.0~
 
 BEGIN ~EEex Remote Console~
 DESIGNATED 0
 LABEL ~EEexRemote-Main~
 
-// ---- Prerequisites ----
-REQUIRE_PREDICATE (GAME_IS ~bgee bg2ee eet~)
-  ~EEex Remote Console requires BG:EE, BG2:EE, or EET.~
+// ---- Prerequisites (version-independent by design) ----
 
-REQUIRE_PREDICATE (MOD_IS_INSTALLED ~EEex/EEex.tp2~ ~0~)
+REQUIRE_PREDICATE (GAME_IS ~bgee bg2ee eet iwdee~)
+  ~EEex Remote Console requires BG:EE, BG2:EE, EET, or IWD:EE.~
+
+// EEex's engine bootstrap is override/M___EEex.lua in every EEex version
+// (0.9.x through 1.0.0) — physical presence beats weidu.log layout checks
+// (v1.0.0 renumbered its components; 0.9.x has no LABELs).
+REQUIRE_PREDICATE (FILE_EXISTS ~override/M___EEex.lua~)
   ~EEex Remote Console requires EEex. Install EEex first: https://github.com/Bubb13/EEex~
+
+// ---- LuaJIT gate ----
+// The io/os Lua libraries this mod needs exist exactly when InfinityLoader.ini
+// says LuaPatchMode=REPLACE_INTERNAL_WITH_EXTERNAL (the EEex "LuaJIT" WeiDU
+// component merely sets that line). Line-anchored regexp — INDEX_BUFFER would
+// also match the ini's comment text describing the option.
+OUTER_SET eeexrc_luajit = 0
+ACTION_IF (FILE_EXISTS ~InfinityLoader.ini~) BEGIN
+  COPY - ~InfinityLoader.ini~ ~InfinityLoader.ini~
+    COUNT_REGEXP_INSTANCES ~^LuaPatchMode=REPLACE_INTERNAL_WITH_EXTERNAL~ eeexrc_luajit
+  BUT_ONLY
+END
+
+ACTION_IF (eeexrc_luajit = 0) BEGIN
+  FAIL ~EEex Remote Console requires the EEex LuaJIT component (it provides the Lua io/os libraries this mod depends on).
+ - EEex v1.0.0: reinstall EEex and choose the "Experimental" quick-menu tier.
+ - EEex v0.10.x / v0.11.x: install the "Experimental - Use LuaJIT" component.
+ - EEex v0.9.x is not supported (no LuaJIT exists for that line).~
+END
 
 // ---- Copy mod files to override ----
 COPY ~eeexremote/M_EEexRC.lua~  ~override~
