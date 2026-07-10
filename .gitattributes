@@ -1,0 +1,6 @@
+* text=auto
+*.sh text eol=lf
+*.lua text eol=lf
+*.menu text eol=lf
+*.ps1 text
+*.tp2 text

@@ -50,7 +50,7 @@ function Assert-True {
     if ([bool]$Condition) { $script:pass++; Write-Host "  PASS  $Name" -ForegroundColor Green }
     else {
         $text = if ($Detail -is [string]) { $Detail }
-                elseif ($null -ne $Detail) { $Detail | ConvertTo-Json -Compress -Depth 6 -WarningAction SilentlyContinue }
+                elseif ($null -ne $Detail) { ConvertTo-Json -InputObject $Detail -Compress -Depth 6 -WarningAction SilentlyContinue }
                 else { '' }
         $script:fail++; Write-Host "  FAIL  $Name  $text" -ForegroundColor Red
     }
@@ -85,7 +85,7 @@ Assert-True 'EEex API callable' ($null -ne $r -and $r.status -eq 'ok' -and $r.re
 
 # --- Task 1: compat core ---
 $r = Invoke-RC 'return EEexRemote.Info()'
-Assert-True 'Info() exists' ($null -ne $r -and $r.status -eq 'ok' -and $r.returnValues[0].protocol -eq '1.1' -and $r.returnValues[0].eeexActive -eq $true) $r
+Assert-True 'Info() payload' ($null -ne $r -and $r.status -eq 'ok' -and $r.returnValues[0].protocol -eq '1.1' -and $r.returnValues[0].eeexActive -eq $true) $r
 
 $r = Invoke-RC 'return EEexRemote.PROTOCOL'
 Assert-True 'protocol version' ($null -ne $r -and $r.returnValue -eq '1.1') $r
@@ -136,9 +136,9 @@ Assert-True 'ready file valid' ($null -ne $ready -and $ready.protocol -eq '1.1' 
 
 # --- Task 4: discoverability ---
 $r = Invoke-RC 'return EEexRemote.ListGlobals("^EEex_Menu_")'
-Assert-True 'ListGlobals finds menu API' ($null -ne $r -and $r.status -eq 'ok' -and $r.returnValues[0].Count -ge 5) $r
+Assert-True 'ListGlobals finds menu API' ($null -ne $r -and $r.status -eq 'ok' -and $r.returnValues[0].Count -ge 5 -and $r.returnValues[0].Count -le 200 -and $r.returnValues[0][0].name -like 'EEex_Menu_*') $r
 $withSource = if ($null -ne $r -and $r.returnValues) { @($r.returnValues[0] | Where-Object { $_.source }) } else { @() }
-Assert-True 'ListGlobals reports sources' ($withSource.Count -ge 1) $withSource
+Assert-True 'ListGlobals reports sources' ($withSource.Count -ge 1) $r
 
 Write-Host ''
 Write-Host "Result: $script:pass passed, $script:fail failed"

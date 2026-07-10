@@ -1,52 +1,60 @@
 #!/usr/bin/env bash
-# eeex-remote.sh — Send Lua commands to a running BG:EE game via EEex Remote Console
+# eeex-remote.sh — Send Lua to a running BG:EE/BG2:EE game via EEex Remote Console
 #
-# Usage: eeex-remote.sh <game-override-dir> <lua-command> [timeout]
-#   lua-command: inline Lua string, or @path/to/file.lua to send file contents
-#   timeout: seconds to wait for result (default: 10)
-#
-# Examples:
-#   eeex-remote.sh <game-dir>/override 'print("hello")'
-#   eeex-remote.sh <game-dir>/override @scripts/diagnostic.lua
-#   eeex-remote.sh <game-dir>/override 'return 2+2' 5
+# Usage: eeex-remote.sh <game-override-dir> <lua-command | @script.lua | - | --api PATTERN> [timeout-sec]
+#   @file.lua : send file contents (whole scripts are one chunk: locals shared)
+#   -         : read the script from stdin
+#   --api P   : list live globals matching Lua pattern P (e.g. '^EEex_Sprite_')
+# Exit codes: 0 ok | 1 lua error/parse_error | 2 timeout | 3 usage
 
 set -euo pipefail
 
 if [ $# -lt 2 ]; then
-    echo "Usage: eeex-remote.sh <game-override-dir> <lua-command> [timeout]" >&2
-    exit 2
+    echo "Usage: eeex-remote.sh <game-override-dir> <lua|@file|-|--api PATTERN> [timeout]" >&2
+    exit 3
 fi
 
-OVERRIDE="$1"
-CMD="$2"
-TIMEOUT=${3:-10}
+OVERRIDE="$1"; shift
+CMD="$1"; shift
+if [ "$CMD" = "--api" ]; then
+    [ $# -ge 1 ] || { echo "--api needs a Lua pattern" >&2; exit 3; }
+    CMD="return EEexRemote.ListGlobals(\"$1\")"; shift
+fi
+TIMEOUT="${1:-10}"
 
 CMD_FILE="$OVERRIDE/eeex_remote_cmd.lua"
 RESULT_FILE="$OVERRIDE/eeex_remote_result.json"
+TMP_FILE="$OVERRIDE/eeex_remote_cmd.tmp.$$"
 
-# Clean up any stale result
+ID="$(date +%s%N)-$$-$RANDOM"
+
+{
+    printf -- '--@id=%s\n' "$ID"
+    if [ "$CMD" = "-" ]; then cat
+    elif [ "${CMD#@}" != "$CMD" ]; then cat "${CMD#@}"
+    else printf '%s' "$CMD"; fi
+} > "$TMP_FILE"
+
 rm -f "$RESULT_FILE"
+mv -f "$TMP_FILE" "$CMD_FILE"   # atomic: the game never reads a partial file
 
-# Write command (@ prefix = send file contents)
-if [[ "$CMD" == @* ]]; then
-    cp "${CMD:1}" "$CMD_FILE"
-else
-    printf '%s' "$CMD" > "$CMD_FILE"
-fi
-
-# Poll for result (0.2s intervals, TIMEOUT is in seconds)
-max_iterations=$((TIMEOUT * 5))
-elapsed=0
-while [ ! -f "$RESULT_FILE" ] && [ "$elapsed" -lt "$max_iterations" ]; do
+deadline=$(( $(date +%s) + TIMEOUT ))
+while :; do
+    if [ -f "$RESULT_FILE" ]; then
+        body="$(cat "$RESULT_FILE" 2>/dev/null || true)"
+        if [ -n "$body" ]; then
+            rid="$(printf '%s' "$body" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4 || true)"
+            if [ -z "$rid" ] || [ "$rid" = "$ID" ]; then
+                rm -f "$RESULT_FILE"
+                printf '%s\n' "$body"
+                printf '%s' "$body" | grep -q '"status":"ok"' && exit 0 || exit 1
+            fi
+            rm -f "$RESULT_FILE"   # stale result from another run — discard
+        fi
+    fi
+    [ "$(date +%s)" -ge "$deadline" ] && break
     sleep 0.2
-    elapsed=$((elapsed + 1))
 done
 
-if [ -f "$RESULT_FILE" ]; then
-    cat "$RESULT_FILE"
-    rm -f "$RESULT_FILE"
-    exit 0
-else
-    echo '{"status":"timeout","error":"No response after '"${TIMEOUT}"'s (is the game running and on the world screen?)"}'
-    exit 1
-fi
+echo '{"status":"timeout","error":"No response after '"$TIMEOUT"'s (game running on world screen or main menu? mod installed?)"}'
+exit 2
