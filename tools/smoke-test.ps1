@@ -106,6 +106,20 @@ if ($IncludeWatchdog) {
     Assert-True 'game alive after watchdog' ($null -ne $r -and $r.returnValue -eq '42') ($r | ConvertTo-Json -Compress -Depth 6 -WarningAction SilentlyContinue)
 }
 
+# --- Task 3: protocol v1.1 ---
+$r = Invoke-RC 'return {a=1, b={2,3}, c="x"}'
+Assert-True 'structured table return' ($null -ne $r -and $r.status -eq 'ok' -and $r.returnValues[0].a -eq 1 -and $r.returnValues[0].b[1] -eq 3) ($r | ConvertTo-Json -Compress -Depth 6 -WarningAction SilentlyContinue)
+
+$r = Invoke-RC 'return 7'
+Assert-True 'id echoed' ($null -ne $r -and $null -ne $r.id) ($r | ConvertTo-Json -Compress -Depth 6 -WarningAction SilentlyContinue)
+Assert-True 'protocol field' ($null -ne $r -and $r.protocol -eq '1.1') ($r | ConvertTo-Json -Compress -Depth 6 -WarningAction SilentlyContinue)
+Assert-True 'durationMs present' ($null -ne $r -and $r.durationMs -ge 0) ($r | ConvertTo-Json -Compress -Depth 6 -WarningAction SilentlyContinue)
+
+$readyPath = Join-Path $OverrideDir 'eeex_remote_ready.json'
+Assert-True 'ready file exists' (Test-Path -LiteralPath $readyPath)
+$ready = if (Test-Path -LiteralPath $readyPath) { Get-Content -Raw -LiteralPath $readyPath -Encoding UTF8 | ConvertFrom-Json } else { $null }
+Assert-True 'ready file valid' ($null -ne $ready -and $ready.protocol -eq '1.1' -and $ready.luajit -eq $true) ($ready | ConvertTo-Json -Compress -Depth 6 -WarningAction SilentlyContinue)
+
 Write-Host ''
 Write-Host "Result: $script:pass passed, $script:fail failed"
 if ($script:fail -gt 0) { exit 1 } else { exit 0 }
