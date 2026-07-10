@@ -21,10 +21,14 @@ if [ "$CMD" = "--api" ]; then
     CMD="return EEexRemote.ListGlobals(\"$1\")"; shift
 fi
 TIMEOUT="${1:-10}"
+case "$TIMEOUT" in
+    ''|*[!0-9]*) echo "timeout must be a non-negative integer, got: $TIMEOUT" >&2; exit 3 ;;
+esac
 
 CMD_FILE="$OVERRIDE/eeex_remote_cmd.lua"
 RESULT_FILE="$OVERRIDE/eeex_remote_result.json"
 TMP_FILE="$OVERRIDE/eeex_remote_cmd.tmp.$$"
+trap 'rm -f "$TMP_FILE"' EXIT
 
 ID="$(date +%s%N)-$$-$RANDOM"
 
@@ -47,6 +51,8 @@ while :; do
             if [ -z "$rid" ] || [ "$rid" = "$ID" ]; then
                 rm -f "$RESULT_FILE"
                 printf '%s\n' "$body"
+                # Safe: the module escapes all quotes inside string values, so the raw
+                # byte sequence "status":"ok" can only occur as the top-level field.
                 printf '%s' "$body" | grep -q '"status":"ok"' && exit 0 || exit 1
             fi
             rm -f "$RESULT_FILE"   # stale result from another run — discard

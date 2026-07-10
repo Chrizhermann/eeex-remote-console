@@ -10,11 +10,14 @@ Notes:
   with the bash client) works in-shell only — pwsh -File binds leading-dash
   arguments as parameter names. With -Api, pass the timeout as -TimeoutSec.
   Quote @file arguments ('@tools/scripts/ping.lua') — bare @ is PowerShell splatting syntax.
+  Stdin ('-') is intended for piped cross-shell/pwsh -File use; in-session
+  PowerShell pipelines do not feed [Console]::In.
+  -Api/'--api' patterns must not contain double quotes.
 Exit codes: 0 ok | 1 lua error/parse_error | 2 timeout | 3 usage
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory, Position = 0)] [string]$OverrideDir,
+    [Parameter(Position = 0)] [string]$OverrideDir,
     [Parameter(Position = 1)] [string]$Command,
     [Parameter(Position = 2)] [string]$Extra,
     [Parameter(Position = 3)] [int]$TimeoutSec = 10,
@@ -22,17 +25,19 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 
-if (-not $Api -and -not $Command) { Write-Error 'Usage: eeex-remote.ps1 <override-dir> <lua|@file|-|--api PATTERN> | -Api <pattern> [-TimeoutSec n]' -ErrorAction Continue; exit 3 }
+if (-not $OverrideDir -or (-not $Api -and -not $Command)) { Write-Error 'Usage: eeex-remote.ps1 <override-dir> <lua|@file|-|--api PATTERN> | -Api <pattern> [-TimeoutSec n]' -ErrorAction Continue; exit 3 }
 if (-not (Test-Path -LiteralPath $OverrideDir -PathType Container)) {
     Write-Error "Override dir not found: $OverrideDir" -ErrorAction Continue; exit 3
 }
+$OverrideDir = (Resolve-Path -LiteralPath $OverrideDir).Path
 if ($Api) {
     $Command = "return EEexRemote.ListGlobals(`"$Api`")"
 } elseif ($Command -eq '--api') {
     if (-not $Extra) { Write-Error '--api needs a Lua pattern' -ErrorAction Continue; exit 3 }
     $Command = "return EEexRemote.ListGlobals(`"$Extra`")"
 } elseif ($Extra) {
-    $TimeoutSec = [int]$Extra
+    try { $TimeoutSec = [int]$Extra }
+    catch { Write-Error "timeout must be an integer, got: $Extra" -ErrorAction Continue; exit 3 }
 }
 
 $cmdFile    = Join-Path $OverrideDir 'eeex_remote_cmd.lua'
@@ -54,7 +59,8 @@ while ((Get-Date) -lt $deadline) {
         $raw = Get-Content -Raw -LiteralPath $resultFile -Encoding UTF8 -ErrorAction SilentlyContinue
         if ($raw) {
             $json = $null
-            try { $json = $raw | ConvertFrom-Json } catch {}
+            try { $json = $raw | ConvertFrom-Json }
+            catch { Write-Warning "discarding invalid result payload: $raw" }
             Remove-Item -LiteralPath $resultFile -Force -ErrorAction SilentlyContinue
             if ($json -and (-not $json.id -or $json.id -eq $id)) {
                 Write-Output $raw

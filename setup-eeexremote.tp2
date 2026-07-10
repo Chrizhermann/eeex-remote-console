@@ -8,6 +8,7 @@ LABEL ~EEexRemote-Main~
 
 // ---- Prerequisites (version-independent by design) ----
 
+// Note: WeiDU's ~bgee~ also matches BG:EE+SoD installs (GAME_IS has no separate sod keyword; SoD detection exists only in GAME_INCLUDES).
 REQUIRE_PREDICATE (GAME_IS ~bgee bg2ee eet iwdee~)
   ~EEex Remote Console requires BG:EE, BG2:EE, EET, or IWD:EE.~
 
