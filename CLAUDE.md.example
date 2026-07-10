@@ -4,14 +4,17 @@ Copy this to `CLAUDE.md` and customize for your setup.
 
 ## Project Overview
 
-File-based IPC bridge for executing Lua inside a running BG:EE/BG2:EE game with EEex. Two files in the game's override directory serve as the communication channel: a command file (Lua source) and a result file (JSON).
+File-based IPC bridge for executing Lua inside a running BG:EE/BG2:EE game with EEex (protocol 1.1). Two files in the game's override directory serve as the communication channel: a command file (Lua source, optionally prefixed with `--@` directive comments) and a result file (JSON).
 
 ## Key Files
 
-- `eeexremote/M_EEexRC.lua` — in-game module (polls for commands, executes, writes JSON results)
-- `eeexremote/EEexRC.menu` — invisible 1x1 menu element that fires `EEexRemote.Poll()` every render frame
-- `tools/eeex-remote.sh` — bash CLI for sending commands
-- `setup-eeexremote.tp2` — WeiDU installer
+- `eeexremote/M_EEexRC.lua` — in-game module (polls for commands, executes them under a watchdog, writes JSON results; protocol 1.1)
+- `eeexremote/EEexRC.menu` — invisible 1x1 menu element that fires `EEexRemote.Poll()` every render frame (pushed on both the world screen and the main menu)
+- `tools/eeex-remote.sh` — bash CLI (exit codes: 0 ok / 1 Lua or parse error / 2 timeout / 3 usage)
+- `tools/eeex-remote.ps1` — PowerShell CLI (same exit codes; `-Api` is the pwsh-File-safe way to list globals)
+- `tools/scripts/` — canned Lua scripts: `ping.lua` (liveness + capabilities), `list-api.lua` (API surface overview), `party.lua` (party names)
+- `tools/smoke-test.ps1` — in-game test suite (needs a running game on the world screen)
+- `setup-eeexremote.tp2` — WeiDU installer (EEex presence check + LuaJIT ini gate)
 
 ## Game Directory
 
@@ -22,21 +25,37 @@ GAME_DIR=/path/to/Baldurs Gate II Enhanced Edition
 OVERRIDE=$GAME_DIR/override
 ```
 
+PowerShell equivalent:
+
+```powershell
+$override = "C:\path\to\Baldurs Gate II Enhanced Edition\override"
+```
+
 ## Quick Test
 
 ```bash
 tools/eeex-remote.sh "$OVERRIDE" 'print("hello")'
 ```
 
+```powershell
+.\tools\eeex-remote.ps1 $override 'print("hello")'
+```
+
 ## Key References
 
 - EEex source: https://github.com/Bubb13/EEex
+- EEex documentation: https://eeex-docs.readthedocs.io/
 - WeiDU documentation: https://weidu.org/
 - IESDP (file format docs): https://gibberlings3.github.io/iesdp/
 
 ## EEex Gotchas
 
+- EEex exposes no version global — probe for capabilities (function presence, `jit`, `io`/`os`) instead of checking versions
+- The Lua `io`/`os` libraries only exist with the EEex LuaJIT component (v1.0.0: "Experimental" tier; 0.10/0.11: "Experimental - Use LuaJIT")
 - `EEex_Menu_LoadFile("Name")` for .menu files, NOT `Infinity_DoFile`
+- The after-main-file-loaded listener fires again on every F5 UI reload; menus are rebuilt from source, so re-hooking there is correct and does not stack
+- Windows `os.rename` fails if the target exists — `os.remove` the target first when publishing atomically
+- LuaJIT count hooks don't fire inside compiled traces — `jit.off()` before `debug.sethook` watchdogs, `jit.on()` after
 - Each Lua `:gsub()` call must be on a separate statement (chaining passes count as arg)
 - No `Infinity_DisplayString()` at M_ load time — engine display not ready
 - `print()` output goes to EEex console, use `Infinity_DisplayString()` for in-game display
