@@ -73,6 +73,13 @@ Assert-True 'EEex API callable' ($r.status -eq 'ok' -and $r.returnValue) ($r | C
 
 # === APPEND NEW CASES BELOW (Tasks 1-6 add their sections here) ===
 
+# --- Task 1: compat core ---
+$r = Invoke-RC 'return EEexRemote.Info()'
+Assert-True 'Info() exists' ($null -ne $r -and $r.status -eq 'ok') ($r | ConvertTo-Json -Compress)
+
+$r = Invoke-RC 'return EEexRemote.PROTOCOL'
+Assert-True 'protocol version' ($null -ne $r -and $r.returnValue -eq '1.1') ($r | ConvertTo-Json -Compress)
+
 Write-Host ''
 Write-Host "Result: $script:pass passed, $script:fail failed"
 if ($script:fail -gt 0) { exit 1 } else { exit 0 }
