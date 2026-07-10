@@ -201,7 +201,17 @@ end
 local function _Execute()
     -- Atomic claim: rename fails while a client still holds the file open
     -- (Windows sharing) and prevents double execution on internal errors.
-    if not os.rename(CMD_FILE, RUN_FILE) then return end
+    if not os.rename(CMD_FILE, RUN_FILE) then
+        -- A stale claim file would block all future claims (rename-to-existing
+        -- fails on Windows). RUN_FILE existing here is always stale: the normal
+        -- path removes it before returning.
+        local stale = io.open(RUN_FILE, "r")
+        if stale then
+            stale:close()
+            os.remove(RUN_FILE)
+        end
+        return
+    end
     local f = io.open(RUN_FILE, "r")
     if not f then os.remove(RUN_FILE); return end
     local code = f:read("*a")
@@ -229,7 +239,8 @@ local function _Execute()
             end
             result = { status = "ok", returnJson = returnJson }
             if res.n >= 2 and res[2] ~= nil then
-                result.returnValue = tostring(res[2]) -- legacy v1 field
+                local okStr, str = pcall(tostring, res[2]) -- __tostring may throw
+                result.returnValue = okStr and str or "<tostring error>"
             end
         else
             local err = res[2]
@@ -300,7 +311,10 @@ end
 -- --------------------------------------------------------------- ready file
 local function _writeReady()
     local out = io.open(READY_FILE, "w")
-    if not out then return end
+    if not out then
+        _realPrint("EEexRemote: failed to write " .. READY_FILE)
+        return
+    end
     out:write('{"protocol":"' .. EEexRemote.PROTOCOL .. '"'
         .. ',"luajit":' .. tostring(jitLib ~= nil)
         .. ',"screens":["' .. table.concat(HOST_MENUS, '","') .. '"]'
@@ -348,7 +362,10 @@ local function _onMenusLoaded()
     end
     _pushed = false
     os.remove(RUN_FILE) -- clear a stale claim from a previous crash
-    EEex_Menu_LoadFile("EEexRC")
+    local okLoad, errLoad = pcall(EEex_Menu_LoadFile, "EEexRC")
+    if not okLoad then
+        _realPrint("EEexRemote: menu load failed: " .. tostring(errLoad))
+    end
     for _, name in ipairs(HOST_MENUS) do
         local m = EEex_Menu_Find(name)
         if m then
