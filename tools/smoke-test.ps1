@@ -1,13 +1,18 @@
 #Requires -Version 5.1
 <#
 smoke-test.ps1 — In-game test suite for EEex Remote Console.
-Requires: game running with the mod installed, on the WORLD SCREEN (a loaded save).
+Requires: game running with the mod installed on the world screen OR the main menu.
+Point it at your game's override directory one of these ways (highest priority first):
+  1. -OverrideDir <path>
+  2. $env:EEEX_OVERRIDE
+  3. the generic fallback below (edit for your install)
 Usage:    .\tools\smoke-test.ps1 [-OverrideDir <path>] [-IncludeWatchdog]
 Exit:     0 all pass, 1 failures, 2 game unreachable.
 #>
 [CmdletBinding()]
 param(
-    [string]$OverrideDir = 'C:\Games\Baldur''s Gate II Enhanced Edition modded\override',
+    [string]$OverrideDir = $(if ($env:EEEX_OVERRIDE) { $env:EEEX_OVERRIDE }
+                            else { 'C:\Games\Baldur''s Gate II Enhanced Edition\override' }),
     [switch]$IncludeWatchdog
 )
 $ErrorActionPreference = 'Stop'
