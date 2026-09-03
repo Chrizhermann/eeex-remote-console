@@ -14,38 +14,91 @@ File-based IPC — no sockets, no FFI, no external dependencies.
 ## Requirements
 
 - A supported Infinity Engine EE game (see matrix below)
-- [EEex](https://github.com/Bubb13/EEex) 0.10.x through 1.0.x with the **LuaJIT component** — it provides the Lua `io`/`os` libraries this mod depends on
-  - EEex v1.0.0: choose the **Experimental** quick-menu tier
-  - EEex v0.10.x / v0.11.x: install the **"Experimental - Use LuaJIT"** component
+- [EEex](https://github.com/Bubb13/EEex) v1.2.0, installed before this mod with:
+  - **component 1 (Main)** — supplies the EEex engine bootstrap
+  - **component 8 (LuaJIT)** — supplies the Lua `io`/`os` libraries this mod uses
+- Install EEex Remote Console **after EEex** so those runtime capabilities are already present
+
+EEex Remote Console deliberately verifies the resulting capabilities rather than
+hardcoding those component numbers. That keeps compatible older EEex installs
+working while making v1.2.0 the collection's documented and supported target.
 
 ### Compatibility Matrix
 
 | EEex version | Status | Verification |
 |--------------|--------|--------------|
 | 0.9.x | **Not supported** | No LuaJIT component exists for that line; the installer refuses to install |
-| 0.10.x | Supported | Not separately verified |
-| 0.11.x | Supported | **Runtime-tested**: v0.11.0-alpha on BG2:EE, full 22-case in-game suite passed |
-| 1.0.x | Supported | **Source-verified only**: every EEex API this mod calls was confirmed present in the v1.0.0 source, but no game has been run on v1.0.0 yet |
+| 0.10.x | Legacy compatible | Accepted by the capability gates; not separately verified |
+| 0.11.x | Legacy compatible | Historical runtime test: v0.11.0-alpha on BG2:EE passed the full 22-case in-game suite |
+| 1.0.x | Legacy compatible | Historical source verification only; no v1.0.x live game run |
+| 1.2.0 | **Current target** | BG2:EE 2.6.6.0 passed the full 22-case smoke suite; EET on 2.7.3 still needs live acceptance |
 
 | Game | Status |
 |------|--------|
-| BG:EE (incl. SoD) | Supported |
-| BG2:EE | Supported — this is where runtime testing happened |
-| EET | Supported |
+| BG:EE (incl. SoD) | Allowed; not separately runtime-tested on the v1.2 target |
+| BG2:EE | Supported — prior v1.2 smoke evidence is from BG2:EE 2.6.6.0 |
+| EET | Targeted — EET on the 2.7.3 engine still needs live acceptance |
 | IWD:EE | Installer allows it; untested |
 
 WeiDU note: the installer's `bgee` check in `GAME_IS` also matches BG:EE+SoD installs — WeiDU has no separate `sod` keyword there (SoD detection exists only in `GAME_INCLUDES`).
 
 ## Installation
 
-1. Copy the `eeexremote` folder and `setup-eeexremote.tp2` into your game directory
-2. Run `setup-eeexremote.exe` (or use WeiDU directly)
-3. Restart the game — the console is live from the main menu onward
+1. Install EEex v1.2.0 components **1 (Main)** and **8 (LuaJIT)**
+2. Copy the `eeexremote` folder and `setup-eeexremote.tp2` into your game directory
+3. Run `setup-eeexremote.exe` (or use WeiDU directly) **after EEex**
+4. Restart the game — the console is live from the main menu onward
 
 The installer verifies its prerequisites in a version-independent way:
 
-- **EEex present** — detected via `override/M___EEex.lua`, EEex's engine bootstrap file in every EEex version. This works across all versions, including v1.0.0's renumbered WeiDU components.
+- **EEex present** — detected via `override/M___EEex.lua`, EEex's engine bootstrap file across the supported compatibility range, including v1.2.0.
 - **LuaJIT enabled** — detected by reading `InfinityLoader.ini` for `LuaPatchMode=REPLACE_INTERNAL_WITH_EXTERNAL` (the line the EEex LuaJIT component sets). If absent, installation fails with per-version instructions for enabling it.
+
+These checks are intentionally capability-based: component numbers describe how
+to produce the required v1.2.0 install, but the installer tests the files and
+loader mode the running game actually receives.
+
+## Live Verification Status
+
+The completed live evidence is **BG2:EE 2.6.6.0 with EEex v1.2.0**: the ready
+handshake and `pong` probe succeeded, and `tools/smoke-test.ps1 -IncludeWatchdog`
+finished with **22-case coverage (22 passed, 0 failed)**, including post-watchdog
+game liveness. This is prior BG2:EE evidence; it is not EET 2.7.3 acceptance.
+
+**EET on the 2.7.3 engine remains pending live acceptance.** Run the following
+checklist on a disposable/current test install when that acceptance is authorized:
+
+1. With the game and `InfinityLoader.exe` closed, install EEex v1.2.0 component
+   1 (Main) and component 8 (LuaJIT), then install EEex Remote Console after
+   EEex. Confirm `override/M___EEex.lua` exists and `InfinityLoader.ini` has the
+   active line `LuaPatchMode=REPLACE_INTERNAL_WITH_EXTERNAL`. Use one client at
+   a time and clear stale `eeex_remote_cmd.lua`, `eeex_remote_cmd.lua.run`,
+   `eeex_remote_result.json`, `eeex_remote_result.json.tmp`, and
+   `eeex_remote_ready.json` before launch.
+2. Launch once through `InfinityLoader.exe`, record the `Baldur.exe` and loader
+   PIDs/start times, and stop at the main menu. The newly written
+   `override/eeex_remote_ready.json` handshake must have a fresh timestamp and
+   report `protocol="1.1"`,
+   `luajit=true`, `disabled=false`, and screens containing both
+   `WORLD_ACTIONBAR` and `START`. The ready file is diagnostics, not liveness.
+3. At the **main menu**, run
+   `.\tools\eeex-remote.ps1 <override> '@tools/scripts/ping.lua'`. Require
+   client exit 0, `status="ok"`, protocol `1.1`, and the first return value
+   `pong`. The returned Info object must report `luajit=true`, `io=true`,
+   `eeexActive=true`, both screen names, and no disabled reason. This proves
+   `START` polling.
+4. Load an EET save to the **world screen** and repeat the same `ping.lua`
+   command. Require a fresh `pong`; this proves `WORLD_ACTIONBAR` polling.
+5. From the world screen, run
+   `.\tools\smoke-test.ps1 -OverrideDir <override> -IncludeWatchdog`. Require
+   client exit 0 and `Result: 22 passed, 0 failed`, including `PASS ready file
+   valid`, `PASS watchdog aborts runaway`, and `PASS game alive after watchdog`.
+   The runaway loop must end with a watchdog error, and the following `return
+   42` probe must prove the game is still alive.
+6. Without restarting, run `ping.lua` once more. Require another healthy `pong`
+   from the same PIDs/start times; this independently proves post-watchdog
+   liveness. Record exact game/EET/EEex/mod versions, ready JSON, both host-screen
+   ping results, the full 22/22 transcript, exit codes, and process identity.
 
 ## How It Works
 
@@ -257,11 +310,11 @@ This is **by design** for development and testing. Do not install this mod in a 
 
 ## Troubleshooting
 
-**Game won't launch after a Steam update (EEex v1.0.0).** The "2.7" beta build — also shipped as a silently refreshed "2.6" — breaks EEex v1.0.0 itself, not this mod. Get a true 2.6.6.0 build and delete the `[Auto-Generated]` section from `InfinityLoader.ini`.
+**Legacy EEex v1.0.0 won't launch after a Steam update.** The "2.7" beta build — also shipped as a silently refreshed "2.6" — breaks EEex v1.0.0 itself, not this mod. The v1.2.0 target supersedes that compatibility line, but EET 2.7.3 acceptance is still pending and must not be inferred from the old BG2:EE 2.6.6.0 smoke run.
 
 **Commands time out.** Check that the game is running and on the world screen or main menu (not in a dialogue), and that the mod is actually installed (`weidu.log`).
 
-**One-time in-game notice "EEex Remote Console disabled…".** The EEex LuaJIT component is missing, so the Lua `io`/`os` libraries don't exist; the module self-disables with a single notice instead of erroring every frame. Reinstall EEex with LuaJIT (v1.0.0: the "Experimental" tier; v0.10.x/v0.11.x: the "Experimental - Use LuaJIT" component). A healthy install writes `eeex_remote_ready.json` with `"disabled":false` when the UI loads.
+**One-time in-game notice "EEex Remote Console disabled…".** The EEex LuaJIT component is missing, so the Lua `io`/`os` libraries don't exist; the module self-disables with a single notice instead of erroring every frame. For the v1.2.0 target, install component 1 (Main) and component 8 (LuaJIT), then reinstall EEex Remote Console after EEex. A healthy install writes `eeex_remote_ready.json` with `"disabled":false` when the UI loads.
 
 **Generalized Biffing.** Don't let it biff `M_EEexRC.lua` or `EEexRC.menu` — a biffed copy breaks polling. The same hazard applies to EEex's own override files.
 

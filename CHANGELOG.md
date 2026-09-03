@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Updated prerequisite and failure guidance for the collection's EEex v1.2.0 target: install component 1 (Main) and component 8 (LuaJIT), then install EEex Remote Console after EEex. The installer still verifies capabilities through `override/M___EEex.lua` and the anchored `LuaPatchMode=REPLACE_INTERNAL_WITH_EXTERNAL` loader setting instead of hardcoding component-log entries.
+- Clarified live evidence boundaries: the completed 22-case smoke run was BG2:EE 2.6.6.0 with EEex v1.2.0; EET on the 2.7.3 engine is pending live acceptance. The README now records the exact future ready-handshake, `pong`, main-menu/world-screen polling, watchdog, and post-watchdog liveness checklist.
+
 ## [0.2.0] - 2026-07-11
 
 ### Added
