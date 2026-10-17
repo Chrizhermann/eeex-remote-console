@@ -6,6 +6,11 @@ Copy this to `CLAUDE.md` and customize for your setup.
 
 File-based IPC bridge for executing Lua inside a running BG:EE/BG2:EE game with EEex (protocol 1.1). Two files in the game's override directory serve as the communication channel: a command file (Lua source, optionally prefixed with `--@` directive comments) and a result file (JSON).
 
+Supported EEex v1.2.x and v1.3.x installs need component 1 (Main) and component 8
+(LuaJIT). Install EEex Remote Console after EEex. The installer enforces the
+resulting bootstrap and loader capabilities rather than hardcoding component
+log entries.
+
 ## Key Files
 
 - `eeexremote/M_EEexRC.lua` — in-game module (polls for commands, executes them under a watchdog, writes JSON results; protocol 1.1)
@@ -13,7 +18,7 @@ File-based IPC bridge for executing Lua inside a running BG:EE/BG2:EE game with 
 - `tools/eeex-remote.sh` — bash CLI (exit codes: 0 ok / 1 Lua or parse error / 2 timeout / 3 usage)
 - `tools/eeex-remote.ps1` — PowerShell CLI (same exit codes; `-Api` is the pwsh-File-safe way to list globals)
 - `tools/scripts/` — canned Lua scripts: `ping.lua` (liveness + capabilities), `list-api.lua` (API surface overview), `party.lua` (party names)
-- `tools/smoke-test.ps1` — in-game test suite (needs a running game on the world screen)
+- `tools/smoke-test.ps1` — in-game test suite (exercise both the world screen and main menu; include `-IncludeWatchdog` for live acceptance)
 - `setup-eeexremote.tp2` — WeiDU installer (EEex presence check + LuaJIT ini gate)
 
 ## Game Directory
@@ -51,7 +56,8 @@ tools/eeex-remote.sh "$OVERRIDE" 'print("hello")'
 ## EEex Gotchas
 
 - EEex exposes no version global — probe for capabilities (function presence, `jit`, `io`/`os`) instead of checking versions
-- The Lua `io`/`os` libraries only exist with the EEex LuaJIT component (v1.0.0: "Experimental" tier; 0.10/0.11: "Experimental - Use LuaJIT")
+- On EEex v1.2.x and v1.3.x, install component 1 (Main) and component 8 (LuaJIT), then install this mod after EEex; the LuaJIT component supplies the Lua `io`/`os` libraries
+- Live smoke evidence: BG2:EE 2.6.6.0 + EEex v1.2.0 passed 22/22 with the watchdog; EET 2.7.3 has the ready handshake and a fresh `pong` (EEex v1.2.0), and its full acceptance follows the README checklist
 - `EEex_Menu_LoadFile("Name")` for .menu files, NOT `Infinity_DoFile`
 - The after-main-file-loaded listener fires again on every F5 UI reload; menus are rebuilt from source, so re-hooking there is correct and does not stack
 - Windows `os.rename` fails if the target exists — `os.remove` the target first when publishing atomically

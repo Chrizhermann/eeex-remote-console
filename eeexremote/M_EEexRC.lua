@@ -1,7 +1,8 @@
 -- M_EEexRC.lua — EEex Remote Console v0.2.0 (protocol 1.1)
 -- Engine auto-loads all M_*.lua from override alphabetically.
--- Requires EEex 0.10+ with LuaJIT (io/os). Self-disables with a visible
--- reason otherwise — never spams per-frame errors.
+-- EEex v1.2 and later: component 1 (Main) plus component 8 (LuaJIT).
+-- Capability probes retain compatible older-version support. The module
+-- self-disables with a visible reason otherwise — never per-frame error spam.
 
 if not EEex_Active then return end
 
@@ -27,7 +28,7 @@ local MAX_VALUE_JSON = 262144      -- max serialized bytes per return value
 -- EEex has no version global; probe for what exists instead.
 local compile  = loadstring or load
 local register = EEex_Menu_AddAfterMainFileLoadedListener
-              or EEex_Menu_AddMainFileLoadedListener -- 0.9.x name; 1.0 alias
+              or EEex_Menu_AddMainFileLoadedListener -- 0.9.x name; v1.x alias
 local jitLib   = rawget(_G, "jit")
 local _realPrint = print
 
@@ -35,9 +36,12 @@ EEexRemote.Disabled = nil
 if not (io and os) then
     EEexRemote.Disabled = "EEex Remote Console disabled: Lua io/os libraries"
         .. " are missing. Install the EEex LuaJIT component"
-        .. " (EEex v1.0.0: choose the Experimental tier)."
+        .. " (EEex v1.2 or later: install component 1 (Main) and"
+        .. " component 8 (LuaJIT), then install EEex Remote Console after EEex)."
 elseif not register then
-    EEexRemote.Disabled = "EEex Remote Console disabled: EEex 0.10+ required."
+    EEexRemote.Disabled = "EEex Remote Console disabled: required EEex menu API"
+        .. " is missing. For EEex v1.2 or later, install component 1 (Main) and"
+        .. " component 8 (LuaJIT), then install EEex Remote Console after EEex."
 end
 
 -- ------------------------------------------------------------ JSON encoding
