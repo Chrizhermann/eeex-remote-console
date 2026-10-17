@@ -14,7 +14,8 @@ File-based IPC — no sockets, no FFI, no external dependencies.
 ## Requirements
 
 - A supported Infinity Engine EE game (see matrix below)
-- [EEex](https://github.com/Bubb13/EEex) 0.10.x through 1.0.x with the **LuaJIT component** — it provides the Lua `io`/`os` libraries this mod depends on
+- [EEex](https://github.com/Bubb13/EEex) 0.10.x through 1.2.x with the **LuaJIT component** — it provides the Lua `io`/`os` libraries this mod depends on
+  - EEex v1.2.x: install the **"Experimental - Use LuaJIT"** component
   - EEex v1.0.0: choose the **Experimental** quick-menu tier
   - EEex v0.10.x / v0.11.x: install the **"Experimental - Use LuaJIT"** component
 
@@ -26,13 +27,16 @@ File-based IPC — no sockets, no FFI, no external dependencies.
 | 0.10.x | Supported | Not separately verified |
 | 0.11.x | Supported | **Runtime-tested**: v0.11.0-alpha on BG2:EE, full 22-case in-game suite passed |
 | 1.0.x | Supported | **Source-verified only**: every EEex API this mod calls was confirmed present in the v1.0.0 source, but no game has been run on v1.0.0 yet |
+| 1.2.x | Supported | **Runtime-tested**: v1.2.0 with LuaJIT on BG2:EE 2.6.6.0 (full 22-case in-game suite passed) and on EET over BG2:EE 2.7.3.0 (ready handshake and a fresh `pong`) |
 
 | Game | Status |
 |------|--------|
 | BG:EE (incl. SoD) | Supported |
-| BG2:EE | Supported — this is where runtime testing happened |
-| EET | Supported |
+| BG2:EE | Supported — this is where the full in-game suite ran |
+| EET | Supported — runtime-tested on 2.7.3.0 |
 | IWD:EE | Installer allows it; untested |
+
+Game versions: runtime-tested on 2.7.3.0, the current patch, and on 2.6.6.0. Which game builds run at all depends on your EEex version.
 
 WeiDU note: the installer's `bgee` check in `GAME_IS` also matches BG:EE+SoD installs — WeiDU has no separate `sod` keyword there (SoD detection exists only in `GAME_INCLUDES`).
 
@@ -257,7 +261,7 @@ This is **by design** for development and testing. Do not install this mod in a 
 
 ## Troubleshooting
 
-**Game won't launch after a Steam update (EEex v1.0.0).** The "2.7" beta build — also shipped as a silently refreshed "2.6" — breaks EEex v1.0.0 itself, not this mod. Get a true 2.6.6.0 build and delete the `[Auto-Generated]` section from `InfinityLoader.ini`.
+**Game won't launch after the 2.7 update (EEex v1.0.0).** Patch 2.7 — Steam also shipped it as a silently refreshed "2.6" beta — breaks EEex v1.0.0 itself, not this mod. Update EEex to v1.2.0 or later, which runs on 2.7.3.0. If the loader still fails, delete the `[Auto-Generated]` section from `InfinityLoader.ini`. Players who want to stay on 2.6.6.0 need a true 2.6.6.0 build; the refreshed "2.6" beta is not one.
 
 **Commands time out.** Check that the game is running and on the world screen or main menu (not in a dialogue), and that the mod is actually installed (`weidu.log`).
 
