@@ -134,8 +134,8 @@ Assert-Matches 'Runtime missing-menu-API diagnostic states install order' $runti
 Assert-NotMatches 'Runtime menu guidance no longer uses the old minimum-only message' $runtimeMenuGuidance `
     'EEex 0\.10\+ required'
 
-# Public/project documentation must distinguish what has already run live from
-# the specific acceptance pass that has not run yet.
+# Public/project documentation must say what has run live, on which engine and
+# EEex version, and keep the checklist for the next release.
 Assert-Matches 'README requirements cover EEex v1.3' $readme `
     'EEex v1\.2\.x and v1\.3\.x: install \*\*component 1 \(Main\)\*\* and \*\*component 8 \(LuaJIT\)\*\*'
 Assert-Matches 'README matrix lists EEex 1.3.x' $readme `
@@ -148,8 +148,12 @@ Assert-Matches 'README records EET 2.7.3 handshake evidence for v1.2 and v1.3' $
     '(?s)EET over BG2:EE 2\.7\.3\.0 with EEex v1\.2\.0.*pong.*EET over BG2:EE 2\.7\.3\.0 with EEex v1\.3\.1.*pong.*22 passed, 0 failed'
 Assert-Matches 'README marks EEex 1.3.x runtime-tested' $readme `
     '\|\s*1\.3\.x\s*\|\s*Supported\s*\|\s*\*\*Runtime-tested\*\*'
-Assert-Matches 'README marks EET 2.7.3 live acceptance pending' $acceptance `
-    '(?i)(?s)EET.*2\.7\.3.*(?:pending|not yet)'
+Assert-Matches 'README records EET 2.7.3 world-screen evidence with EEex v1.3.1' $acceptance `
+    '(?s)EET over BG2:EE 2\.7\.3\.0 with EEex v1\.3\.1.*world-screen steps 4\S{1,3}6.*pong.*22 passed, 0 failed.*same game and loader processes'
+Assert-Matches 'README marks the EET 2.7.3 checklist passed with EEex v1.3.1' $acceptance `
+    'full checklist below has passed on EET over BG2:EE 2\.7\.3\.0 with EEex v1\.3\.1'
+Assert-NotMatches 'README no longer calls the EET 2.7.3 acceptance pending' $acceptance `
+    '(?i)still pending'
 Assert-Matches 'README future checklist names ready file' $acceptance `
     'eeex_remote_ready\.json'
 Assert-Matches 'README future checklist verifies ready protocol' $acceptance `
@@ -168,8 +172,10 @@ Assert-Matches 'README future checklist includes watchdog and liveness' $accepta
     '(?s)-IncludeWatchdog.*watchdog.*(?:alive|liveness)'
 Assert-Matches 'Changelog records the v1.2 target update' $unreleased `
     '(?s)EEex v1\.2(?:\.0)?.*component\s+1.*component\s+8'
-Assert-Matches 'Changelog separates old evidence from pending EET acceptance' $unreleased `
-    '(?i)(?s)BG2:EE\s+2\.6\.6(?:\.0)?.*EET.*2\.7\.3.*pending'
+Assert-Matches 'Changelog separates old evidence from the EET acceptance' $unreleased `
+    '(?s)BG2:EE\s+2\.6\.6(?:\.0)?.*EET over BG2:EE 2\.7\.3\.0.*EEex v1\.3\.1.*whole README checklist.*world screen'
+Assert-NotMatches 'Changelog no longer calls the EET acceptance pending' $unreleased `
+    '(?i)still pending'
 Assert-Matches 'Claude example reflects v1.2 component requirements' $claudeExample `
     '(?s)EEex v1\.2(?:\.0)?.*component\s+1.*component\s+8'
 

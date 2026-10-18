@@ -73,12 +73,18 @@ Live evidence so far:
   ready handshake (`protocol="1.1"`, `luajit=true`, `disabled=false`, both
   screens), a fresh `pong` with the expected Info object, and
   `tools/smoke-test.ps1 -IncludeWatchdog` with **22 passed, 0 failed** on the main
-  menu, including post-watchdog game liveness.
+  menu, including post-watchdog game liveness. The same lab (EET v14.0) then passed
+  the world-screen steps 4–6 below twice: with the v0.2.0 loader from `master`
+  (this branch changes only its comments and disabled-reason texts), and with this
+  branch's loader plus the `START_SP` fix from [#4](https://github.com/Chrizhermann/eeex-remote-console/pull/4). Both times `ping.lua` answered
+  `pong` on the world screen, the suite passed there with **22 passed, 0 failed**,
+  and the next `pong` came from the same game and loader processes.
 
-**The full EET acceptance on the 2.7.3 engine is still pending**: world-screen
-polling (steps 4 and 5 below) has not run there yet; the main-menu steps and the
-22-case suite on the main menu have. Run the following checklist on a disposable
-test install:
+**The full checklist below has passed on EET over BG2:EE 2.7.3.0 with EEex v1.3.1.**
+The world-screen runs found one menu-stack bug: when `START` reopened in
+single-player state, the console menu covered `START_SP`, and `START_SP` then
+stayed on the stack under the game's screens ([#4](https://github.com/Chrizhermann/eeex-remote-console/pull/4) fixes it). Run the checklist on a
+disposable test install for each new EEex or game release:
 
 1. With the game and `InfinityLoader.exe` closed, install EEex v1.2.0 or later
    with component 1 (Main) and component 8 (LuaJIT), then install EEex Remote
