@@ -144,10 +144,10 @@ Assert-Matches 'README names v1.2 components and install order' $readme `
     '(?s)EEex v1\.2(?:\.0)?.*component\s+1.*component\s+8.*after EEex'
 Assert-Matches 'README records prior BG2EE 2.6.6 smoke evidence' $acceptance `
     '(?s)BG2:EE\s+2\.6\.6(?:\.0)?.*EEex v1\.2(?:\.0)?.*22[- ]case'
-Assert-Matches 'README records EET 2.7.3 handshake evidence for v1.2' $acceptance `
-    '(?s)EET over BG2:EE 2\.7\.3\.0 with EEex v1\.2\.0.*pong'
-Assert-Matches 'README marks EEex 1.3.x as source-reviewed until it runs' $readme `
-    '\|\s*1\.3\.x\s*\|\s*Supported\s*\|\s*\*\*Source-reviewed\*\*'
+Assert-Matches 'README records EET 2.7.3 handshake evidence for v1.2 and v1.3' $acceptance `
+    '(?s)EET over BG2:EE 2\.7\.3\.0 with EEex v1\.2\.0.*pong.*EET over BG2:EE 2\.7\.3\.0 with EEex v1\.3\.1.*pong.*22 passed, 0 failed'
+Assert-Matches 'README marks EEex 1.3.x runtime-tested' $readme `
+    '\|\s*1\.3\.x\s*\|\s*Supported\s*\|\s*\*\*Runtime-tested\*\*'
 Assert-Matches 'README marks EET 2.7.3 live acceptance pending' $acceptance `
     '(?i)(?s)EET.*2\.7\.3.*(?:pending|not yet)'
 Assert-Matches 'README future checklist names ready file' $acceptance `
@@ -183,6 +183,11 @@ Assert-Matches 'Smoke ready assertion checks enabled state' $smokeTest `
     '(?s)ready file valid.*?\.disabled\s+-eq\s+\$false'
 Assert-Matches 'Smoke ready assertion checks both screens' $smokeTest `
     '(?s)ready file valid.*?WORLD_ACTIONBAR.*?START'
+# PowerShell 7 converts ISO 8601 strings to [datetime] in ConvertFrom-Json.
+Assert-Matches 'Smoke ready timestamp is checked on the raw JSON text' $smokeTest `
+    '\$readyTimestampOk\s*=\s*\$readyRaw\s+-match\s+''"timestamp"'
+Assert-NotMatches 'Smoke ready check does not regex a parsed timestamp' $smokeTest `
+    '\$ready\.timestamp\s+-match'
 Assert-Matches 'Module hosts polling on world and main-menu screens' $module `
     'HOST_MENUS\s*=\s*\{\s*"WORLD_ACTIONBAR"\s*,\s*"START"\s*\}'
 Assert-Matches 'Ping script returns pong plus Info' $pingScript `

@@ -57,7 +57,7 @@ tools/eeex-remote.sh "$OVERRIDE" 'print("hello")'
 
 - EEex exposes no version global — probe for capabilities (function presence, `jit`, `io`/`os`) instead of checking versions
 - On EEex v1.2.x and v1.3.x, install component 1 (Main) and component 8 (LuaJIT), then install this mod after EEex; the LuaJIT component supplies the Lua `io`/`os` libraries
-- Live smoke evidence: BG2:EE 2.6.6.0 + EEex v1.2.0 passed 22/22 with the watchdog; EET 2.7.3 has the ready handshake and a fresh `pong` (EEex v1.2.0), and its full acceptance follows the README checklist
+- Live smoke evidence: BG2:EE 2.6.6.0 + EEex v1.2.0 passed 22/22 with the watchdog; EET 2.7.3 has the ready handshake and a fresh `pong` (EEex v1.2.0 and v1.3.1) and, with v1.3.1, 22/22 on the main menu; world-screen acceptance follows the README checklist
 - `EEex_Menu_LoadFile("Name")` for .menu files, NOT `Infinity_DoFile`
 - The after-main-file-loaded listener fires again on every F5 UI reload; menus are rebuilt from source, so re-hooking there is correct and does not stack
 - Windows `os.rename` fails if the target exists — `os.remove` the target first when publishing atomically

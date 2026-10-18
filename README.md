@@ -32,7 +32,7 @@ component numbers, so compatible older EEex installs keep working.
 | 0.11.x | Supported | **Runtime-tested**: v0.11.0-alpha on BG2:EE, full 22-case in-game suite passed |
 | 1.0.x | Supported | **Source-verified only**: every EEex API this mod calls was confirmed present in the v1.0.0 source, but no game has been run on v1.0.0 yet |
 | 1.2.x | Supported | **Runtime-tested**: v1.2.0 with LuaJIT on BG2:EE 2.6.6.0 (full 22-case in-game suite passed) and on EET over BG2:EE 2.7.3.0 (ready handshake and a fresh `pong`) |
-| 1.3.x | Supported | **Source-reviewed**: every EEex API this mod calls is unchanged in v1.3.1; no game has been run on v1.3 yet |
+| 1.3.x | Supported | **Runtime-tested**: v1.3.1 with LuaJIT on EET over BG2:EE 2.7.3.0 (ready handshake, fresh `pong`, and the full 22-case suite with the watchdog on the main menu) |
 
 | Game | Status |
 |------|--------|
@@ -69,10 +69,16 @@ Live evidence so far:
   succeeded, and `tools/smoke-test.ps1 -IncludeWatchdog` finished with **22-case
   coverage (22 passed, 0 failed)**, including post-watchdog game liveness.
 - **EET over BG2:EE 2.7.3.0 with EEex v1.2.0**: ready handshake and a fresh `pong`.
+- **EET over BG2:EE 2.7.3.0 with EEex v1.3.1** (2026-10-18, disposable lab): the
+  ready handshake (`protocol="1.1"`, `luajit=true`, `disabled=false`, both
+  screens), a fresh `pong` with the expected Info object, and
+  `tools/smoke-test.ps1 -IncludeWatchdog` with **22 passed, 0 failed** on the main
+  menu, including post-watchdog game liveness.
 
 **The full EET acceptance on the 2.7.3 engine is still pending**: world-screen
-polling and the 22-case suite with the watchdog have not run there yet. Run the
-following checklist on a disposable test install:
+polling (steps 4 and 5 below) has not run there yet; the main-menu steps and the
+22-case suite on the main menu have. Run the following checklist on a disposable
+test install:
 
 1. With the game and `InfinityLoader.exe` closed, install EEex v1.2.0 or later
    with component 1 (Main) and component 8 (LuaJIT), then install EEex Remote
