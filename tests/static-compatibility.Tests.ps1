@@ -196,6 +196,20 @@ Assert-NotMatches 'Smoke ready check does not regex a parsed timestamp' $smokeTe
     '\$ready\.timestamp\s+-match'
 Assert-Matches 'Module hosts polling on world and main-menu screens' $module `
     'HOST_MENUS\s*=\s*\{\s*"WORLD_ACTIONBAR"\s*,\s*"START"\s*\}'
+# START's onOpen closes START and opens START_SP when the start engine is in
+# single-player state. A console menu pushed after that covered START_SP, whose
+# buttons close it with a no-argument Infinity_PopMenu(), so START_SP stayed on
+# the stack (and on screen) for the rest of the session.
+Assert-Matches 'Host hook opens the console before the host onOpen' $module `
+    '(?s)local function _hookHostMenu\(menu, hostName\).*?Infinity_PushMenu\("EEEX_REMOTE"\).*?_runRecordingPushes\(oldOnOpen\)'
+Assert-NotMatches 'Host hook no longer opens the console after the host onOpen' $module `
+    '(?s)if oldOnOpen then r = oldOnOpen\(\) end\s*if not _pushed then'
+Assert-Matches 'Console never covers a menu the host onOpen opened' $module `
+    '(?s)for _, name in ipairs\(opened\) do\s*if _onStack\(name\) then return result end'
+Assert-Matches 'Push recording restores the engine function before rethrowing' $module `
+    '(?s)local ok, result = pcall\(fn\)\s*Infinity_PushMenu = enginePush\s*if not ok then error\(result, 0\) end'
+Assert-Matches 'Host hooks receive their menu name' $module `
+    'pcall\(_hookHostMenu, m, name\)'
 Assert-Matches 'Ping script returns pong plus Info' $pingScript `
     'return\s+"pong"\s*,\s*EEexRemote\.Info\(\)'
 Assert-Matches 'Smoke watchdog is followed by a liveness case' $smokeTest `

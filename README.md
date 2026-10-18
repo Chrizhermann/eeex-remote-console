@@ -132,7 +132,9 @@ eeex_remote_result.json    <──────────── writes temp fil
 read it, then delete it                  eeex_remote_result.json
 ```
 
-An invisible 1x1 menu element calls `EEexRemote.Poll()` every render frame. The element is pushed on top of both the **world screen** (`WORLD_ACTIONBAR`) and the **main menu** (`START`), so commands work in-game and from the title screen. Polling is render-driven, independent of simulation pause — it keeps working while the game is **paused**.
+An invisible 1x1 menu element calls `EEexRemote.Poll()` every render frame. The element opens with both the **world screen** (`WORLD_ACTIONBAR`) and the **main menu** (`START`), so commands work in-game and from the title screen. Polling is render-driven, independent of simulation pause — it keeps working while the game is **paused**.
+
+The element opens directly above its host, before the host's own `onOpen` runs, so every menu that `onOpen` opens lies above it. This matters because stock menus close themselves with a no-argument `Infinity_PopMenu()`, which removes the top menu. When `START` reopens in single-player state, its `onOpen` replaces it with the single-player menu `START_SP`; the console then closes with `START` and polls again on the next host screen instead of covering `START_SP`. On EET's first boot, `START` closes during campaign set-up without opening another menu and reopens on the first mouse event; the console stays available meanwhile.
 
 Both sides use atomic renames: the game claims the command file by renaming it before reading (no partial reads, no double execution) and publishes the result via a temp file + rename (clients never observe a half-written result).
 
