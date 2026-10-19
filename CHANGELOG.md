@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The single-player start menu (`START_SP`) could stay on the menu stack for the rest of the session and be drawn under the game's own screens. When `START` reopened in single-player state (back from character creation, the load screen or the options), its own `onOpen` replaced it with `START_SP`, and the console menu was then pushed on top. `START_SP`'s buttons close it with a no-argument `Infinity_PopMenu()`, so New Game, Load Game and the other buttons popped the console menu instead. The console menu now opens before the host's `onOpen` and never covers a menu that `onOpen` opened; after such a redirect the console waits for the next host screen. The first-boot behavior is unchanged: when EET's campaign set-up closes `START` without opening another menu, the console stays available until `START` reopens on the first mouse event.
 - The smoke suite's ready-file timestamp check failed under PowerShell 7, whose `ConvertFrom-Json` turns ISO 8601 strings into `[datetime]` values. It now checks the timestamp on the raw JSON text, so PowerShell 5.1 and 7 agree.
 
 ### Changed

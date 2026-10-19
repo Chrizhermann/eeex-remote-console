@@ -332,16 +332,51 @@ end
 -- ----------------------------------------------------------- host menu hooks
 local _pushed = false
 
-local function _hookHostMenu(menu)
+local function _onStack(name)
+    local v = Infinity_IsMenuOnStack(name)
+    return v ~= nil and v ~= false and v ~= 0
+end
+
+-- Runs a host's own onOpen and also returns the menus it pushed.
+local function _runRecordingPushes(fn)
+    local enginePush, pushed = Infinity_PushMenu, {}
+    Infinity_PushMenu = function(name, ...)
+        pushed[#pushed + 1] = name
+        return enginePush(name, ...)
+    end
+    local ok, result = pcall(fn)
+    Infinity_PushMenu = enginePush
+    if not ok then error(result, 0) end
+    return result, pushed
+end
+
+-- EEEX_REMOTE goes on the stack before the host's own onOpen runs, so every
+-- menu that onOpen opens lies above it. Stock menus close themselves with a
+-- no-argument Infinity_PopMenu(), which pops the top menu; EEEX_REMOTE on top
+-- of such a menu would be popped in its place and leave the menu behind.
+-- START's onOpen closes START itself: when it redirects to START_SP (or to the
+-- last start menu) the onClose hook below takes EEEX_REMOTE down with START,
+-- and the console waits for the next host instead of covering START_SP. Only
+-- when onOpen left no menu of its own (EET's first-boot campaign set-up, after
+-- which START reopens on the first mouse event) does EEEX_REMOTE stay up, as
+-- the hidden-test bootstrap needs it there.
+local function _hookHostMenu(menu, hostName)
     local oldOnOpen = EEex_Menu_GetItemFunction(menu.reference_onOpen)
     EEex_Menu_SetItemFunction(menu.reference_onOpen, function()
-        local r
-        if oldOnOpen then r = oldOnOpen() end
         if not _pushed then
             Infinity_PushMenu("EEEX_REMOTE")
             _pushed = true
         end
-        return r
+        if not oldOnOpen then return end
+        local result, opened = _runRecordingPushes(oldOnOpen)
+        if not _pushed and not _onStack(hostName) then
+            for _, name in ipairs(opened) do
+                if _onStack(name) then return result end
+            end
+            Infinity_PushMenu("EEEX_REMOTE")
+            _pushed = true
+        end
+        return result
     end)
     local oldOnClose = EEex_Menu_GetItemFunction(menu.reference_onClose)
     EEex_Menu_SetItemFunction(menu.reference_onClose, function()
@@ -373,7 +408,7 @@ local function _onMenusLoaded()
     for _, name in ipairs(HOST_MENUS) do
         local m = EEex_Menu_Find(name)
         if m then
-            local ok, err = pcall(_hookHostMenu, m)
+            local ok, err = pcall(_hookHostMenu, m, name)
             if not ok then
                 _realPrint("EEexRemote: failed to hook " .. name .. ": "
                     .. tostring(err))
