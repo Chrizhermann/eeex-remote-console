@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- The smoke suite's ready-file timestamp check failed under PowerShell 7, whose `ConvertFrom-Json` turns ISO 8601 strings into `[datetime]` values. It now checks the timestamp on the raw JSON text, so PowerShell 5.1 and 7 agree.
+
+### Changed
+
+- Prerequisite and failure guidance for EEex v1.2.x and v1.3.x: install component 1 (Main) and component 8 (LuaJIT), then install EEex Remote Console after EEex. The installer still verifies capabilities through `override/M___EEex.lua` and the anchored `LuaPatchMode=REPLACE_INTERNAL_WITH_EXTERNAL` loader setting instead of hardcoding component-log entries.
+- The smoke suite's `Info()` and ready-file checks also require LuaJIT, `io`, no disabled reason and both host screens (`WORLD_ACTIONBAR` and `START`).
+- Live evidence: the first full 22-case smoke run was BG2:EE 2.6.6.0 with EEex v1.2.0. EET over BG2:EE 2.7.3.0 answered the ready handshake and a fresh `pong` with EEex v1.2.0; with EEex v1.3.1 it passed the whole README checklist: the 22-case suite with the watchdog on the main menu and on the world screen, and a fresh `pong` from the same game process afterwards.
+
 ## [0.2.0] - 2026-07-11
 
 ### Added

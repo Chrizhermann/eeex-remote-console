@@ -12,11 +12,12 @@ LABEL ~EEexRemote-Main~
 REQUIRE_PREDICATE (GAME_IS ~bgee bg2ee eet iwdee~)
   ~EEex Remote Console requires BG:EE, BG2:EE, EET, or IWD:EE.~
 
-// EEex's engine bootstrap is override/M___EEex.lua in every EEex version
-// (0.9.x through 1.0.0) — physical presence beats weidu.log layout checks
-// (v1.0.0 renumbered its components; 0.9.x has no LABELs).
+// EEex's engine bootstrap is override/M___EEex.lua in every compatible EEex
+// version through v1.3. Physical presence beats weidu.log
+// layout checks (v1.x renumbered components; 0.9.x has no LABELs).
 REQUIRE_PREDICATE (FILE_EXISTS ~override/M___EEex.lua~)
-  ~EEex Remote Console requires EEex. Install EEex first: https://github.com/Bubb13/EEex~
+  ~EEex Remote Console requires EEex.
+For EEex v1.2 or later (including v1.3), install EEex component 1 (Main) and component 8 (LuaJIT), then install EEex Remote Console after EEex: https://github.com/Bubb13/EEex~
 
 // ---- LuaJIT gate ----
 // The io/os Lua libraries this mod needs exist exactly when InfinityLoader.ini
@@ -32,6 +33,7 @@ END
 
 ACTION_IF (eeexrc_luajit = 0) BEGIN
   FAIL ~EEex Remote Console requires the EEex LuaJIT component (it provides the Lua io/os libraries this mod depends on).
+ - EEex v1.2 or later (including v1.3): install component 1 (Main) and component 8 (LuaJIT), then install EEex Remote Console after EEex.
  - EEex v1.0.0: reinstall EEex and choose the "Experimental" quick-menu tier.
  - EEex v0.10.x / v0.11.x: install the "Experimental - Use LuaJIT" component.
  - EEex v0.9.x is not supported (no LuaJIT exists for that line).~

@@ -90,7 +90,16 @@ Assert-True 'EEex API callable' ($null -ne $r -and $r.status -eq 'ok' -and $r.re
 
 # --- Task 1: compat core ---
 $r = Invoke-RC 'return EEexRemote.Info()'
-Assert-True 'Info() payload' ($null -ne $r -and $r.status -eq 'ok' -and $r.returnValues[0].protocol -eq '1.1' -and $r.returnValues[0].eeexActive -eq $true) $r
+$info = if ($null -ne $r -and $r.returnValues) { $r.returnValues[0] } else { $null }
+$infoScreens = if ($null -ne $info) { @($info.screens) } else { @() }
+Assert-True 'Info() payload' (
+    $null -ne $r -and $r.status -eq 'ok' -and
+    $null -ne $info -and $info.protocol -eq '1.1' -and
+    $info.eeexActive -eq $true -and $info.luajit -eq $true -and
+    $info.io -eq $true -and $null -eq $info.disabled -and
+    $infoScreens -contains 'WORLD_ACTIONBAR' -and
+    $infoScreens -contains 'START'
+) $r
 
 $r = Invoke-RC 'return EEexRemote.PROTOCOL'
 Assert-True 'protocol version' ($null -ne $r -and $r.returnValue -eq '1.1') $r
@@ -128,16 +137,27 @@ Assert-True 'durationMs present' ($null -ne $r -and $r.durationMs -ge 0) $r
 $readyPath = Join-Path $OverrideDir 'eeex_remote_ready.json'
 Assert-True 'ready file exists' (Test-Path -LiteralPath $readyPath)
 $ready = $null
+$readyRaw = ''
 if (Test-Path -LiteralPath $readyPath) {
-    $raw = Get-Content -Raw -LiteralPath $readyPath -Encoding UTF8
+    $readyRaw = Get-Content -Raw -LiteralPath $readyPath -Encoding UTF8
     try {
-        $ready = $raw | ConvertFrom-Json
+        $ready = $readyRaw | ConvertFrom-Json
     } catch {
-        Write-Host "  INVALID-JSON ready payload: $raw" -ForegroundColor Red
+        Write-Host "  INVALID-JSON ready payload: $readyRaw" -ForegroundColor Red
         $ready = $null
     }
 }
-Assert-True 'ready file valid' ($null -ne $ready -and $ready.protocol -eq '1.1' -and $ready.luajit -eq $true) $ready
+$readyScreens = if ($null -ne $ready) { @($ready.screens) } else { @() }
+# PowerShell 7's ConvertFrom-Json turns ISO 8601 strings into [datetime] (5.1 keeps
+# strings), so check the timestamp's wire format on the raw JSON text.
+$readyTimestampOk = $readyRaw -match '"timestamp"\s*:\s*"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z"'
+Assert-True 'ready file valid' (
+    $null -ne $ready -and $ready.protocol -eq '1.1' -and
+    $ready.luajit -eq $true -and $ready.disabled -eq $false -and
+    $readyTimestampOk -and
+    $readyScreens -contains 'WORLD_ACTIONBAR' -and
+    $readyScreens -contains 'START'
+) $ready
 
 # --- Task 4: discoverability ---
 $r = Invoke-RC 'return EEexRemote.ListGlobals("^EEex_Menu_")'
