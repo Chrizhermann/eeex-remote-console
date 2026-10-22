@@ -75,11 +75,12 @@ $runtimeMenuGuidanceMatch = [regex]::Match(
 )
 $runtimeMenuGuidance = $runtimeMenuGuidanceMatch.Groups['message'].Value
 
-$unreleasedMatch = [regex]::Match(
+# The EEex v1.2/v1.3 update and its live evidence shipped in 0.2.1.
+$release021Match = [regex]::Match(
     $changelog,
-    '(?ms)^## \[Unreleased\]\s*(?<body>.*?)(?=^## \[)'
+    '(?ms)^## \[0\.2\.1\][^\r\n]*\s*(?<body>.*?)(?=^## \[)'
 )
-$unreleased = $unreleasedMatch.Groups['body'].Value
+$release021 = $release021Match.Groups['body'].Value
 
 $acceptanceMatch = [regex]::Match(
     $readme,
@@ -170,11 +171,11 @@ Assert-Matches 'README future checklist verifies both polling hosts' $acceptance
     '(?i)(?s)main menu.*world screen'
 Assert-Matches 'README future checklist includes watchdog and liveness' $acceptance `
     '(?s)-IncludeWatchdog.*watchdog.*(?:alive|liveness)'
-Assert-Matches 'Changelog records the v1.2 target update' $unreleased `
+Assert-Matches 'Changelog records the v1.2 target update' $release021 `
     '(?s)EEex v1\.2(?:\.0)?.*component\s+1.*component\s+8'
-Assert-Matches 'Changelog separates old evidence from the EET acceptance' $unreleased `
+Assert-Matches 'Changelog separates old evidence from the EET acceptance' $release021 `
     '(?s)BG2:EE\s+2\.6\.6(?:\.0)?.*EET over BG2:EE 2\.7\.3\.0.*EEex v1\.3\.1.*whole README checklist.*world screen'
-Assert-NotMatches 'Changelog no longer calls the EET acceptance pending' $unreleased `
+Assert-NotMatches 'Changelog no longer calls the EET acceptance pending' $release021 `
     '(?i)still pending'
 Assert-Matches 'Claude example reflects v1.2 component requirements' $claudeExample `
     '(?s)EEex v1\.2(?:\.0)?.*component\s+1.*component\s+8'

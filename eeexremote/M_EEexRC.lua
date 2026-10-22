@@ -1,4 +1,4 @@
--- M_EEexRC.lua — EEex Remote Console v0.2.0 (protocol 1.1)
+-- M_EEexRC.lua — EEex Remote Console v0.2.1 (protocol 1.1)
 -- Engine auto-loads all M_*.lua from override alphabetically.
 -- EEex v1.2 and later: component 1 (Main) plus component 8 (LuaJIT).
 -- Capability probes retain compatible older-version support. The module
